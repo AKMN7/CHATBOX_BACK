@@ -38,6 +38,7 @@ exports.signup = catchAsync(async (req, res, _) => {
 		password: req.body.password,
 		passwordConfirm: req.body.passwordConfirm,
 		source: "local",
+		profilePic: generateAvatar(req.body.name),
 		friends: [],
 	});
 
@@ -115,3 +116,15 @@ exports.protect = catchAsync(async (req, res, next) => {
 	req.user = currentUser;
 	next();
 });
+
+// Helper Function to generate placeholder avatars
+function generateAvatar(name) {
+	let nameArr = name.trim().split(" ");
+	let str = "";
+	nameArr.forEach((el, ind) => {
+		if (ind === nameArr.length - 1) str += el;
+		else str += el + "+";
+	});
+
+	return `https://ui-avatars.com/api/?name=${str}&size=128&background=random`;
+}
