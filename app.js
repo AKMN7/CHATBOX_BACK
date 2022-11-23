@@ -86,6 +86,29 @@ const io = new Server(server, {
 
 // Protect Middleware
 io.use(socketController.socketProtect);
-io.on("connection", socketController.onConnection);
+// io.on("connection", socketController.onConnection);
+io.on("connection", (socket) => {
+	socket.join(socket.userID); // Join The User to his room
+	console.log(`*** User => ${socket.userID} Connected ***`);
+
+	socket.on("online", (data) => {
+		// Send "I am Online" tp all of the users chats
+		data.forEach((el) => {
+			socket.to(el.id).emit("set-online", socket.userID);
+			// if (socket.rooms.has(el.id)) socket.emit("set-online", el.id);
+		});
+	});
+
+	socket.on("send-msg", (to, msgText) => {
+		let msg = {
+			from: socket.userID,
+			to,
+			msgText,
+		};
+
+		socket.emit("recieve-msg", { ...msg, selfSend: true });
+		socket.to(msg.to).emit("recieve-msg", { ...msg, selfSend: false });
+	});
+});
 
 module.exports = server;

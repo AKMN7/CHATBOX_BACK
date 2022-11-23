@@ -17,5 +17,14 @@ exports.socketProtect = async (socket, next) => {
 };
 
 exports.onConnection = (socket) => {
+	socket.join(socket.userID); // Join The User to his room
 	console.log(`*** User => ${socket.userID} Connected ***`);
+
+	socket.on("send-msg", (msg) => {
+		console.log("This is the message recieved", msg);
+		console.log("typeof", socket.userID);
+		console.log("typeof", msg.to);
+		// socket.to(socket.userID).emit("recieve-msg", msg);
+		socket.to(msg.to).to(socket.userID).emit("recieve-msg", msg);
+	});
 };
