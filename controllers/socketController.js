@@ -1,4 +1,4 @@
-// const User = require('../models/userModel');
+const Message = require("../models/messageModel");
 const { promisify } = require("util");
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
@@ -20,11 +20,26 @@ exports.onConnection = (socket) => {
 	socket.join(socket.userID); // Join The User to his room
 	console.log(`*** User => ${socket.userID} Connected ***`);
 
-	socket.on("send-msg", (msg) => {
-		console.log("This is the message recieved", msg);
-		console.log("typeof", socket.userID);
-		console.log("typeof", msg.to);
-		// socket.to(socket.userID).emit("recieve-msg", msg);
-		socket.to(msg.to).to(socket.userID).emit("recieve-msg", msg);
+	socket.on("online", (data) => {
+		// Send "I am Online" tp all of the users chats
+		Object.keys(data).forEach((el) => {
+			socket.to(el).emit("set-online", socket.userID);
+		});
+	});
+
+	socket.on("chat-deleted", (id) => {
+		socket.to(id).emit("delete-chat", socket.userID);
+	});
+
+	socket.on("send-msg", async (to, msgText, date) => {
+		let msg = await Message.create({
+			from: socket.userID,
+			to: to,
+			text: msgText,
+			date,
+		});
+
+		socket.emit("recieve-msg", { ...msg.toObject(), selfSend: true });
+		socket.to(msg.to).emit("recieve-msg", { ...msg.toObject(), selfSend: false });
 	});
 };

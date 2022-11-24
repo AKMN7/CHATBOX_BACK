@@ -21,5 +21,6 @@ router.post("/deleteInvite", userController.deleteInvite);
 // Chats
 router.get("/getChats", chatcontroller.getChats);
 router.delete("/deleteChat/:userID", chatcontroller.deleteChat);
+// router.get("/getChatMessages/:userID", chatcontroller.getChatMessages);
 
 module.exports = router;
