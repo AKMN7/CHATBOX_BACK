@@ -23,4 +23,7 @@ router.get("/getChats", chatcontroller.getChats);
 router.delete("/deleteChat/:userID", chatcontroller.deleteChat);
 // router.get("/getChatMessages/:userID", chatcontroller.getChatMessages);
 
+// Upload Profile Picture
+router.post("/uploadProfilePic", authController.upload.single("profilePic"), authController.uploadProfilePic);
+
 module.exports = router;

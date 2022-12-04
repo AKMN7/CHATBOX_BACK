@@ -5,6 +5,8 @@ const catchAsync = require("../utils/catchAsync");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client();
+const multer = require("multer");
+const AWS = require("aws-sdk");
 
 // Sign A Json Web Token (JWT)
 const signToken = (id) => {
@@ -128,3 +130,56 @@ function generateAvatar(name) {
 
 	return `https://ui-avatars.com/api/?name=${str}&size=128&background=random`;
 }
+
+//! THE BELOW CODE IS USED TO STORE IMAGES IN AWS S3
+
+// Storage Instance to upload file to a specified destination folder
+const storage = multer.memoryStorage({
+	destination: function (req, file, cb) {
+		cb(null, "");
+	},
+});
+
+// Check the type of the uploaded file
+const fileFilter = (req, file, cb) => {
+	if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
+		cb(null, false);
+	} else {
+		cb(null, true);
+	}
+};
+
+// Defining the upload varable for the configuration of the photo being uploaded
+exports.upload = multer({
+	storage: storage,
+	fileFilter: fileFilter,
+});
+
+// S3 Instance, used to upload images to the S3 bucket
+const s3 = new AWS.S3({
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+		secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET,
+	},
+});
+
+exports.uploadProfilePic = catchAsync(async (req, res, next) => {
+	const params = {
+		Bucket: process.env.AWS_BUCKET_NAME,
+		Key: `imgs/${req.user._id}`,
+		Body: req.file.buffer,
+		ACL: "public-read-write",
+		ContentType: "image/jpeg",
+	};
+
+	s3.upload(params, async (error, data) => {
+		if (error) return next(new AppError("Error Uploading Image", 500));
+
+		await User.findByIdAndUpdate(req.user._id, { profilePic: data.Location });
+
+		res.status(200).json({
+			status: "success",
+			newImage: data.Location,
+		});
+	});
+});
