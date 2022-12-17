@@ -163,6 +163,7 @@ const s3 = new AWS.S3({
 	},
 });
 
+// Upload a User ProfilePic to AWS S3
 exports.uploadProfilePic = catchAsync(async (req, res, next) => {
 	const params = {
 		Bucket: process.env.AWS_BUCKET_NAME,
